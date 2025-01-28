@@ -61,6 +61,11 @@ import "../styles/global.css";
 				</button>
 			</div>
 		</div>
+
+		<!-- Add this audio element before the closing div -->
+		<audio id="spinSound" loop>
+			<source src="/spin.mp3" type="audio/mpeg">
+		</audio>
 	</div>
 
 	<style>
@@ -215,11 +220,16 @@ import "../styles/global.css";
 			
 			spinning = true;
 			const spins = 5;
-			const duration = 3000;
+			const duration = 9000;
 			const startRotation = currentRotation;
 			const extraSpins = spins * 2 * Math.PI;
 			const endRotation = startRotation + extraSpins + Math.random() * 2 * Math.PI;
 			const startTime = performance.now();
+
+			// Play spinning sound
+			const spinSound = document.getElementById('spinSound');
+			spinSound.currentTime = 0;
+			spinSound.play();
 
 			function animate(currentTime) {
 				const elapsed = currentTime - startTime;
@@ -235,6 +245,9 @@ import "../styles/global.css";
 					requestAnimationFrame(animate);
 				} else {
 					spinning = false;
+					// Stop the spinning sound
+					spinSound.pause();
+					
 					const sliceAngle = (2 * Math.PI) / names.length;
 					const normalizedRotation = currentRotation % (2 * Math.PI);
 					const winningIndex = Math.floor(names.length - (normalizedRotation / sliceAngle)) % names.length;
