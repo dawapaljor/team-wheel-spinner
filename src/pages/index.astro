@@ -1,0 +1,291 @@
+---
+import Layout from '../layouts/Layout.astro';
+import "../styles/global.css";
+---
+
+<Layout>
+	<div class="min-h-screen p-10 ">
+		<div class="max-w-screen-lg mx-auto bg-white rounded-lg p-8">
+			<h1 class="text-4xl font-bold text-center mb-8">Tibet Action Institute</h1>
+			<div class="flex flex-col md:flex-row gap-8">
+				<!-- Input Section -->
+				<div class="w-full md:w-1/3">
+					<div class="mb-4">
+						<input 
+							type="text" 
+							id="nameInput" 
+							class="w-full px-4 py-2 border rounded-lg"
+							placeholder="Enter a name"
+						/>
+					</div>
+					<button 
+						id="addName" 
+						class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg mb-4 hover:bg-blue-600"
+					>
+						Add Name
+					</button>
+					<button 
+						id="spin" 
+						class="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+					>
+						Spin Wheel
+					</button>
+					<div class="mt-4">
+						<h3 class="font-bold mb-2">Names List:</h3>
+						<ul id="namesList" class="list-disc pl-5"></ul>
+					</div>
+				</div>
+
+				<!-- Wheel Section -->
+				<div class="w-full md:w-2/3">
+					<canvas id="wheelCanvas" class="mx-auto"></canvas>
+					<div id="result" class="text-center mt-4 text-xl font-bold"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Add this right after the main container div -->
+		<div id="winnerPopup" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+			<div class="bg-white rounded-lg p-8 relative">
+				<div class="sparkles absolute inset-0"></div>
+				<h2 class="text-2xl font-bold mb-4 text-center">🎉 We Have a Winner! You are our Next moderator🎉</h2>
+				<p id="popupResult" class="text-5xl text-center"></p>
+				<button 
+					id="closePopup" 
+					class="mt-6 w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+				>
+					Close
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<style>
+		@keyframes sparkle {
+			0% { transform: scale(0) rotate(0deg); opacity: 0; }
+			50% { opacity: 1; }
+			100% { transform: scale(1) rotate(180deg); opacity: 0; }
+		}
+
+		.sparkles::before,
+		.sparkles::after {
+			content: "✨";
+			position: absolute;
+			animation: sparkle 1.5s infinite;
+		}
+
+		.sparkles::before {
+			left: 10%;
+			top: 20%;
+		}
+
+		.sparkles::after {
+			right: 10%;
+			bottom: 20%;
+		}
+	</style>
+
+	<script>
+		let names = [];
+		let spinning = false;
+		const canvas = document.getElementById('wheelCanvas');
+		const ctx = canvas.getContext('2d');
+		let currentRotation = 0;
+
+		// Set canvas size
+		canvas.width = 400;
+		canvas.height = 400;
+
+		// Add this at the top of your script with other variables
+		const colors = {
+			wheel: [
+				'#93C5FD', // blue-300
+				'#86EFAC', // green-300
+				'#C4B5FD', // purple-300
+				'#F9A8D4', // pink-300
+				'#FDE047', // yellow-300
+				'#FDBA74', // orange-300
+				'#5EEAD4', // teal-300
+				'#A5B4FC'  // indigo-300
+			],
+			list: [
+				'bg-blue-100 hover:bg-blue-200',
+				'bg-green-100 hover:bg-green-200',
+				'bg-purple-100 hover:bg-purple-200',
+				'bg-pink-100 hover:bg-pink-200',
+				'bg-yellow-100 hover:bg-yellow-200',
+				'bg-orange-100 hover:bg-orange-200',
+				'bg-teal-100 hover:bg-teal-200',
+				'bg-indigo-100 hover:bg-indigo-200'
+			]
+		};
+
+		function addName() {
+			const input = document.getElementById('nameInput');
+			const name = input.value.trim();
+			if (name) {
+				names.push(name);
+				input.value = '';
+				updateNamesList();
+				drawWheel();
+			}
+		}
+
+		function deleteName(index) {
+			names.splice(index, 1);
+			updateNamesList();
+			drawWheel();
+			if (names.length === 0) {
+				document.getElementById('result').textContent = '';
+			}
+		}
+
+		function updateNamesList() {
+			const list = document.getElementById('namesList');
+			list.innerHTML = names.map((name, index) => `
+				<li class="flex items-center justify-between group ${colors.list[index % colors.list.length]} p-2 rounded-lg mb-2">
+					<span class="font-medium">${name}</span>
+					<button 
+						data-index="${index}"
+						class="delete-btn opacity-0 group-hover:opacity-100 ml-2 px-2 py-0.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+					>
+						Delete
+					</button>
+				</li>
+			`).join('');
+		}
+
+		function drawWheel() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			const centerX = canvas.width / 2;
+			const centerY = canvas.height / 2;
+			const radius = Math.min(centerX, centerY) - 10;
+
+			if (names.length > 0) {
+				const sliceAngle = (2 * Math.PI) / names.length;
+
+				for (let i = 0; i < names.length; i++) {
+					ctx.beginPath();
+					ctx.moveTo(centerX, centerY);
+					ctx.arc(
+						centerX, 
+						centerY, 
+						radius, 
+						i * sliceAngle + currentRotation, 
+						(i + 1) * sliceAngle + currentRotation
+					);
+					ctx.closePath();
+
+					// Use matching colors from the array
+					ctx.fillStyle = colors.wheel[i % colors.wheel.length];
+					ctx.fill();
+					ctx.strokeStyle = '#ffffff';
+					ctx.lineWidth = 2;
+					ctx.stroke();
+
+					// Add text
+					ctx.save();
+					ctx.translate(centerX, centerY);
+					ctx.rotate(i * sliceAngle + sliceAngle / 2 + currentRotation);
+					ctx.textAlign = 'right';
+					ctx.fillStyle = '#000000';  // Changed to black for better contrast
+					ctx.font = 'bold 16px Arial';
+					ctx.fillText(names[i], radius - 20, 5);
+					ctx.restore();
+				}
+
+				// Draw pointer
+				ctx.beginPath();
+				ctx.moveTo(centerX + radius + 10, centerY);
+				ctx.lineTo(centerX + radius - 10, centerY - 10);
+				ctx.lineTo(centerX + radius - 10, centerY + 10);
+				ctx.closePath();
+				ctx.fillStyle = '#DC2626'; // red-600
+				ctx.strokeStyle = '#ffffff';
+				ctx.fill();
+				ctx.stroke();
+			}
+		}
+
+		function spinWheel() {
+			if (spinning || names.length === 0) return;
+			
+			spinning = true;
+			const spins = 5;
+			const duration = 3000;
+			const startRotation = currentRotation;
+			const extraSpins = spins * 2 * Math.PI;
+			const endRotation = startRotation + extraSpins + Math.random() * 2 * Math.PI;
+			const startTime = performance.now();
+
+			function animate(currentTime) {
+				const elapsed = currentTime - startTime;
+				const progress = Math.min(elapsed / duration, 1);
+				
+				// Easing function for smooth deceleration
+				const easeOut = 1 - Math.pow(1 - progress, 3);
+				
+				currentRotation = startRotation + (endRotation - startRotation) * easeOut;
+				drawWheel();
+
+				if (progress < 1) {
+					requestAnimationFrame(animate);
+				} else {
+					spinning = false;
+					const sliceAngle = (2 * Math.PI) / names.length;
+					const normalizedRotation = currentRotation % (2 * Math.PI);
+					const winningIndex = Math.floor(names.length - (normalizedRotation / sliceAngle)) % names.length;
+					const winner = names[winningIndex];
+					document.getElementById('result').textContent = `Winner: ${winner}`;
+					showWinnerPopup(winner);
+				}
+			}
+
+			requestAnimationFrame(animate);
+		}
+
+		function showWinnerPopup(winner) {
+			const popup = document.getElementById('winnerPopup');
+			const popupResult = document.getElementById('popupResult');
+			popup.classList.remove('hidden');
+			popupResult.textContent = winner;
+
+			// Create multiple sparkle elements
+			const sparkleContainer = popup.querySelector('.sparkles');
+			sparkleContainer.innerHTML = ''; // Clear existing sparkles
+			
+			for (let i = 0; i < 10; i++) {
+				const sparkle = document.createElement('span');
+				sparkle.textContent = '✨';
+				sparkle.style.position = 'absolute';
+				sparkle.style.left = Math.random() * 100 + '%';
+				sparkle.style.top = Math.random() * 100 + '%';
+				sparkle.style.animation = `sparkle ${1 + Math.random()}s infinite ${Math.random() * 2}s`;
+				sparkleContainer.appendChild(sparkle);
+			}
+		}
+
+		// Event listeners
+		document.getElementById('addName').addEventListener('click', addName);
+		document.getElementById('spin').addEventListener('click', spinWheel);
+		document.getElementById('nameInput').addEventListener('keypress', (e) => {
+			if (e.key === 'Enter') addName();
+		});
+
+		// Add event delegation for delete buttons
+		document.getElementById('namesList').addEventListener('click', (e) => {
+			if (e.target.classList.contains('delete-btn')) {
+				const index = parseInt(e.target.dataset.index);
+				deleteName(index);
+			}
+		});
+
+		// Add close popup handler
+		document.getElementById('closePopup').addEventListener('click', () => {
+			document.getElementById('winnerPopup').classList.add('hidden');
+		});
+
+		// Initial draw
+		drawWheel();
+	</script>
+</Layout>
