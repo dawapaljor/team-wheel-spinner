@@ -1,18 +1,31 @@
 {
-  "name": "spinner",
-  "type": "module",
-  "version": "0.0.1",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "@tailwindcss/postcss": "^4.0.0",
-    "@tailwindcss/vite": "^4.0.0",
-    "astro": "^5.1.10",
-    "postcss": "^8.5.1",
-    "tailwindcss": "^4.0.0"
-  }
+	"name": "spinner",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"astro": "astro"
+	},
+	"dependencies": {
+		"@tailwindcss/postcss": "^4.0.0",
+		"@tailwindcss/vite": "^4.0.0",
+		"astro": "^5.1.10",
+		"postcss": "^8.5.1",
+		"tailwindcss": "^4.0.0"
+	},
+	"Resources": {
+		"loklad": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": {
+					"Fn::Sub": "${AWS::StackName}-loklad-${AWS::AccountId}"
+				},
+				"WebsiteConfiguration": {
+					"IndexDocument": "index.html"
+				}
+			}
+		}
+	}
 }
