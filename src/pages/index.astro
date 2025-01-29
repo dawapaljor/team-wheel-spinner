@@ -66,6 +66,11 @@ import "../styles/global.css";
 		<audio id="spinSound" loop>
 			<source src="/spin.mp3" type="audio/mpeg">
 		</audio>
+
+		<!-- Add this audio element next to the existing spinSound audio -->
+		<audio id="winnerSound">
+			<source src="/winner.mp3" type="audio/mpeg">
+		</audio>
 	</div>
 
 	<style>
@@ -219,7 +224,7 @@ import "../styles/global.css";
 			if (spinning || names.length === 0) return;
 			
 			spinning = true;
-			const spins = 5;
+			const spins = 10;
 			const duration = 9000;
 			const startRotation = currentRotation;
 			const extraSpins = spins * 2 * Math.PI;
@@ -263,9 +268,15 @@ import "../styles/global.css";
 		function showWinnerPopup(winner) {
 			const popup = document.getElementById('winnerPopup');
 			const popupResult = document.getElementById('popupResult');
+			const winnerSound = document.getElementById('winnerSound');
+			
+			// Play winner sound
+			winnerSound.currentTime = 0;
+			winnerSound.play();
+			
 			popup.classList.remove('hidden');
 			popupResult.textContent = winner;
-
+			
 			// Create multiple sparkle elements
 			const sparkleContainer = popup.querySelector('.sparkles');
 			sparkleContainer.innerHTML = ''; // Clear existing sparkles
